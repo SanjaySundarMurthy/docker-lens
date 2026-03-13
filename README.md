@@ -2,7 +2,7 @@
 
 **Docker Image Analyzer & Optimizer CLI** — Lint Dockerfiles, analyze images, scan vulnerabilities, and optimize size with beautiful terminal output.
 
-[![PyPI version](https://badge.fury.io/py/docker-lens.svg)](https://pypi.org/project/docker-lens/)
+[![PyPI version](https://badge.fury.io/py/docker-lens-cli.svg)](https://pypi.org/project/docker-lens-cli/)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -26,7 +26,7 @@
 ### Installation
 
 ```bash
-pip install docker-lens
+pip install docker-lens-cli
 ```
 
 ### Try It Now (No Docker Required!)

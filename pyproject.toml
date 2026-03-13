@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "docker-lens"
+name = "docker-lens-cli"
 version = "1.0.0"
 description = "Docker Image Analyzer & Optimizer — lint Dockerfiles, analyze images, scan vulnerabilities, optimize size"
 readme = "README.md"
@@ -50,6 +50,9 @@ docker-lens = "docker_lens.cli:cli"
 Homepage = "https://github.com/SanjaySundarMurthy/docker-lens"
 Repository = "https://github.com/SanjaySundarMurthy/docker-lens"
 Issues = "https://github.com/SanjaySundarMurthy/docker-lens/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["docker_lens"]
 
 [tool.ruff]
 line-length = 100
