@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "docker-lens-cli"
-version = "1.0.0"
+version = "1.1.0"
 description = "Docker Image Analyzer & Optimizer — lint Dockerfiles, analyze images, scan vulnerabilities, optimize size"
 readme = "README.md"
 license = "MIT"
@@ -64,6 +64,7 @@ select = ["E", "F", "W", "I"]
 [tool.ruff.lint.per-file-ignores]
 "docker_lens/analyzers/dockerfile.py" = ["E501"]
 "docker_lens/output/console.py" = ["E501"]
+"docker_lens/output/html_report.py" = ["E501"]
 "docker_lens/demo.py" = ["E501"]
 "tests/*" = ["E501"]
 

@@ -34,7 +34,8 @@ def cli() -> None:
 @cli.command()
 @click.argument("dockerfile", default="Dockerfile", type=click.Path())
 @click.option("--json", "json_out", default=None, help="Export results to JSON file.")
-def lint(dockerfile: str, json_out: str | None) -> None:
+@click.option("--html", "html_out", default=None, help="Export results to HTML report.")
+def lint(dockerfile: str, json_out: str | None, html_out: str | None) -> None:
     """Lint a Dockerfile for best practices (35 rules).
 
     Works without Docker — just point at a Dockerfile.
@@ -58,7 +59,13 @@ def lint(dockerfile: str, json_out: str | None) -> None:
         from .output.reports import export_json
 
         path = export_json(result, json_out)
-        console.print(f"\n📄 Report saved: [bold]{path}[/bold]")
+        console.print(f"\n📄 JSON report saved: [bold]{path}[/bold]")
+
+    if html_out:
+        from .output.html_report import export_html
+
+        path = export_html(result, html_out)
+        console.print(f"\n🌐 HTML report saved: [bold]{path}[/bold]")
 
     sys.exit(0 if result.passed else 1)
 
@@ -104,7 +111,8 @@ def analyze(image: str, json_out: str | None) -> None:
 @cli.command()
 @click.argument("image")
 @click.option("--json", "json_out", default=None, help="Export results to JSON file.")
-def scan(image: str, json_out: str | None) -> None:
+@click.option("--html", "html_out", default=None, help="Export results to HTML report.")
+def scan(image: str, json_out: str | None, html_out: str | None) -> None:
     """Security vulnerability scan on a Docker image.
 
     Scans for known CVEs in installed packages.
@@ -132,7 +140,13 @@ def scan(image: str, json_out: str | None) -> None:
         from .output.reports import export_json
 
         path = export_json(result, json_out)
-        console.print(f"\n📄 Report saved: [bold]{path}[/bold]")
+        console.print(f"\n📄 JSON report saved: [bold]{path}[/bold]")
+
+    if html_out:
+        from .output.html_report import export_html
+
+        path = export_html(result, html_out)
+        console.print(f"\n🌐 HTML report saved: [bold]{path}[/bold]")
 
 
 # ── optimize ──────────────────────────────────────────────────────────────
@@ -141,7 +155,8 @@ def scan(image: str, json_out: str | None) -> None:
 @cli.command()
 @click.argument("image")
 @click.option("--json", "json_out", default=None, help="Export results to JSON file.")
-def optimize(image: str, json_out: str | None) -> None:
+@click.option("--html", "html_out", default=None, help="Export results to HTML report.")
+def optimize(image: str, json_out: str | None, html_out: str | None) -> None:
     """Suggest optimizations to reduce image size.
 
     Analyzes layers, base image, and build patterns.
@@ -169,7 +184,13 @@ def optimize(image: str, json_out: str | None) -> None:
         from .output.reports import export_json
 
         path = export_json(result, json_out)
-        console.print(f"\n📄 Report saved: [bold]{path}[/bold]")
+        console.print(f"\n📄 JSON report saved: [bold]{path}[/bold]")
+
+    if html_out:
+        from .output.html_report import export_html
+
+        path = export_html(result, html_out)
+        console.print(f"\n🌐 HTML report saved: [bold]{path}[/bold]")
 
 
 # ── compare ───────────────────────────────────────────────────────────────
@@ -248,11 +269,104 @@ def history(image: str) -> None:
     console.print(table)
 
 
+# ── fullscan ──────────────────────────────────────────────────────────────
+
+
+@cli.command()
+@click.argument("image")
+@click.option(
+    "--dockerfile", default=None, type=click.Path(exists=True),
+    help="Also lint this Dockerfile.",
+)
+@click.option("--html", "html_out", default=None, help="Export full HTML dashboard report.")
+@click.option("--json", "json_out", default=None, help="Export results to JSON file.")
+def fullscan(
+    image: str,
+    dockerfile: str | None,
+    html_out: str | None,
+    json_out: str | None,
+) -> None:
+    """Run ALL analyses on an image — the ultimate scan.
+
+    Combines image analysis, security scan, and efficiency
+    optimization into one comprehensive report. Optionally lint
+    a Dockerfile too.
+    """
+    render_banner()
+    console.print(
+        f"\n[bold cyan]🔬 Full Scan[/bold cyan]: [bold]{image}[/bold]\n"
+    )
+
+    from .analyzers.efficiency import analyze_efficiency
+    from .analyzers.security import scan_image
+    from .docker_client import DockerClient, DockerConnectionError
+
+    try:
+        client = DockerClient()
+        analysis = client.analyze_image(image)
+    except DockerConnectionError as exc:
+        console.print(f"[red]❌ Docker not available:[/red]\n{exc}")
+        sys.exit(1)
+    except Exception as exc:
+        console.print(f"[red]❌ Error:[/red] {exc}")
+        sys.exit(1)
+
+    lint_result = None
+    if dockerfile:
+        from .analyzers.dockerfile import lint_file
+
+        console.rule("[bold cyan]1/ Dockerfile Lint[/bold cyan]")
+        lint_result = lint_file(dockerfile)
+        render_lint_result(lint_result)
+        console.print()
+
+    n = 2 if dockerfile else 1
+    console.rule(f"[bold cyan]{n}/ Image Analysis[/bold cyan]")
+    render_image_analysis(analysis)
+    console.print()
+
+    console.rule(f"[bold cyan]{n + 1}/ Security Scan[/bold cyan]")
+    sec_result = scan_image(analysis)
+    render_security_result(sec_result)
+    console.print()
+
+    console.rule(f"[bold cyan]{n + 2}/ Efficiency[/bold cyan]")
+    eff_result = analyze_efficiency(analysis)
+    render_efficiency_result(eff_result)
+
+    if json_out:
+        from .output.reports import export_json
+
+        path = export_json(analysis, json_out)
+        console.print(f"\n📄 JSON report saved: [bold]{path}[/bold]")
+
+    if html_out:
+        from .output.html_report import export_full_html
+
+        path = export_full_html(
+            lint_result=lint_result,
+            analysis=analysis,
+            security_result=sec_result,
+            efficiency_result=eff_result,
+            output_path=html_out,
+        )
+        console.print(f"\n🌐 HTML dashboard saved: [bold]{path}[/bold]")
+
+    console.print()
+    console.print(
+        Panel(
+            "[bold green]✅ Full scan complete![/bold green]",
+            border_style="green",
+        )
+    )
+
+
 # ── demo ──────────────────────────────────────────────────────────────────
 
 
 @cli.command()
-def demo() -> None:
+@click.option("--html", "html_out", default=None, help="Export demo as HTML report.")
+def demo(html_out: str | None) -> None:
     """Run a full demo — works without Docker!
 
     Shows lint, analysis, security, and efficiency on sample data.
@@ -314,6 +428,18 @@ def demo() -> None:
             border_style="green",
         )
     )
+
+    if html_out:
+        from .output.html_report import export_full_html
+
+        path = export_full_html(
+            lint_result=lint_result,
+            analysis=analysis,
+            security_result=sec,
+            efficiency_result=eff,
+            output_path=html_out,
+        )
+        console.print(f"\n🌐 HTML dashboard saved: [bold]{path}[/bold]")
 
 
 # ── rules ─────────────────────────────────────────────────────────────────
