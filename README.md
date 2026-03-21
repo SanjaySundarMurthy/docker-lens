@@ -1,4 +1,8 @@
-# 🔍 Docker Lens
+﻿# 🔍 Docker Lens
+
+[![CI](https://github.com/SanjaySundarMurthy/docker-lens/actions/workflows/ci.yml/badge.svg)](https://github.com/SanjaySundarMurthy/docker-lens/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/pypi/pyversions/docker-lens-cli)](https://pypi.org/project/docker-lens-cli/)
+[![PyPI](https://img.shields.io/pypi/v/docker-lens-cli)](https://pypi.org/project/docker-lens-cli/)
 
 **Docker Image Analyzer & Optimizer CLI** — Lint Dockerfiles, analyze images, scan vulnerabilities, and optimize size with beautiful terminal output.
 
@@ -166,7 +170,7 @@ This runs through all 4 analysis types with realistic sample data, showing the b
 # Clone and install
 git clone https://github.com/SanjaySundarMurthy/docker-lens.git
 cd docker-lens
-pip install -e ".[dev]"
+pip install docker-lens-cli
 
 # Run tests
 pytest -v
@@ -190,3 +194,28 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 **Sanjay S** — DevOps Engineer  
 [GitHub](https://github.com/SanjaySundarMurthy) · [PyPI](https://pypi.org/user/SanjaySundarMurthy/)
+
+
+## 🤝 Contributing
+
+Contributions are welcome! Here's how:
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+Please ensure tests pass before submitting:
+
+```bash
+pip install docker-lens-cli
+pytest -v
+ruff check .
+```
+
+## 🔗 Links
+
+- **PyPI**: [https://pypi.org/project/docker-lens-cli/](https://pypi.org/project/docker-lens-cli/)
+- **GitHub**: [https://github.com/SanjaySundarMurthy/docker-lens](https://github.com/SanjaySundarMurthy/docker-lens)
+- **Issues**: [https://github.com/SanjaySundarMurthy/docker-lens/issues](https://github.com/SanjaySundarMurthy/docker-lens/issues)
