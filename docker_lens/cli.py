@@ -76,7 +76,8 @@ def lint(dockerfile: str, json_out: str | None, html_out: str | None) -> None:
 @cli.command()
 @click.argument("image")
 @click.option("--json", "json_out", default=None, help="Export results to JSON file.")
-def analyze(image: str, json_out: str | None) -> None:
+@click.option("--html", "html_out", default=None, help="Export results to HTML report.")
+def analyze(image: str, json_out: str | None, html_out: str | None) -> None:
     """Analyze a Docker image — layers, metadata, scoring.
 
     Requires Docker daemon running.
@@ -102,7 +103,13 @@ def analyze(image: str, json_out: str | None) -> None:
         from .output.reports import export_json
 
         path = export_json(analysis, json_out)
-        console.print(f"\n📄 Report saved: [bold]{path}[/bold]")
+        console.print(f"\n📄 JSON report saved: [bold]{path}[/bold]")
+
+    if html_out:
+        from .output.html_report import export_html
+
+        path = export_html(analysis, html_out)
+        console.print(f"\n🌐 HTML report saved: [bold]{path}[/bold]")
 
 
 # ── scan ──────────────────────────────────────────────────────────────────

@@ -26,6 +26,13 @@ env/
 htmlcov/
 .tox/
 
+# Generated reports
+report.html
+*.report.html
+
+# Ruff cache
+.ruff_cache/
+
 # OS
 .DS_Store
 Thumbs.db

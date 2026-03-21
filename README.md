@@ -7,7 +7,7 @@
 **Docker Image Analyzer & Optimizer CLI** — Lint Dockerfiles, analyze images, scan vulnerabilities, and optimize size with beautiful terminal output.
 
 [![PyPI version](https://badge.fury.io/py/docker-lens-cli.svg)](https://pypi.org/project/docker-lens-cli/)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
@@ -20,10 +20,11 @@
 | 🐳 **Image Analyzer** | Layer breakdown, metadata, scoring | ✅ Yes |
 | 🔐 **Security Scanner** | CVE vulnerability detection with built-in database | ✅ Yes |
 | ⚡ **Efficiency Optimizer** | Size reduction suggestions with estimated savings | ✅ Yes |
+| 🔬 **Full Scan** | All analyses combined in one comprehensive report | ✅ Yes |
 | 🔄 **Image Comparison** | Side-by-side comparison of two images | ✅ Yes |
 | 📜 **Build History** | Full layer history viewer | ✅ Yes |
 | 🎬 **Demo Mode** | Full demo with sample data — no Docker needed! | ❌ No |
-| 📊 **JSON Reports** | Export any result to structured JSON | — |
+| 📊 **JSON/HTML Reports** | Export any result to JSON or styled HTML | — |
 
 ## 🚀 Quick Start
 
@@ -58,6 +59,9 @@ docker-lens scan python:3.11
 # Optimization suggestions
 docker-lens optimize node:18
 
+# Full scan — all analyses combined
+docker-lens fullscan nginx:latest --dockerfile Dockerfile
+
 # Compare two images
 docker-lens compare python:3.11 python:3.11-slim
 
@@ -78,10 +82,10 @@ The linter checks your Dockerfile against 35 best-practice rules across 4 catego
 | SEC004 | Unpinned base image tag (using :latest) |
 | SEC005 | Installing SSH server in container |
 | SEC006 | Using curl\|bash pattern (remote code execution risk) |
-| SEC007 | Using ADD instead of COPY for local files |
-| SEC008 | Exposing sensitive port 22 (SSH) |
-| SEC009 | Running with --privileged flag |
-| SEC010 | No HEALTHCHECK instruction |
+| SEC007 | ADD from URL without checksum verification |
+| SEC008 | Exposing sensitive ports (22, 3389, 5900) |
+| SEC009 | COPY without explicit --chmod permissions |
+| SEC010 | Using apt-get dist-upgrade (unpredictable changes) |
 
 ### ⚡ Efficiency (EFF001–EFF010)
 | Rule | Description |
@@ -93,32 +97,32 @@ The linter checks your Dockerfile against 35 best-practice rules across 4 catego
 | EFF005 | Missing --no-cache for apk |
 | EFF006 | Missing --no-cache-dir for pip |
 | EFF007 | Using large base image (full variant) |
-| EFF008 | Separate chmod/chown layer |
-| EFF009 | Large COPY before dependency install |
-| EFF010 | npm install without --production |
+| EFF008 | COPY . . (broad copy) — copies entire context |
+| EFF009 | npm install instead of npm ci (slower, non-deterministic) |
+| EFF010 | pip install without version pins |
 
 ### 🔧 Maintainability (MNT001–MNT010)
 | Rule | Description |
 |------|-------------|
 | MNT001 | No LABEL metadata |
 | MNT002 | Using deprecated MAINTAINER |
-| MNT003 | Missing WORKDIR instruction |
-| MNT004 | Relative WORKDIR path |
+| MNT003 | Relative WORKDIR path |
+| MNT004 | No WORKDIR set — files land in / |
 | MNT005 | Using shell form for CMD/ENTRYPOINT |
 | MNT006 | No EXPOSE instruction |
-| MNT007 | Missing .dockerignore |
-| MNT008 | Unpinned package versions |
-| MNT009 | Multiple FROM without naming (AS) |
-| MNT010 | No description LABEL |
+| MNT007 | Unpinned apt package versions |
+| MNT008 | ADD used when COPY would suffice |
+| MNT009 | Multiple CMD instructions (only last takes effect) |
+| MNT010 | Multiple ENTRYPOINT instructions |
 
 ### 🛡️ Reliability (REL001–REL005)
 | Rule | Description |
 |------|-------------|
-| REL001 | Multiple CMD instructions |
-| REL002 | No SHELL pipefail for pipes |
-| REL003 | Multiple ENTRYPOINT instructions |
-| REL004 | COPY before package install |
-| REL005 | apt-get install without -y flag |
+| REL001 | No HEALTHCHECK — orchestrators can't verify health |
+| REL002 | Missing pipefail — pipe failures silently ignored |
+| REL003 | apt-get update in separate RUN (stale cache layer) |
+| REL004 | COPY before dependency install (cache invalidation) |
+| REL005 | apt-get install without -y flag (hangs waiting) |
 
 ## 🔐 Security Scanner
 
@@ -144,15 +148,42 @@ Analyzes your image and suggests concrete optimizations:
 - **Multi-Stage Build** — Detect build tools in final image
 - **Layer Optimization** — Reduce layer count, find oversized layers
 
-## 📊 JSON Export
+## 📊 Export Options
 
-Export any result to structured JSON for CI/CD integration:
+Export results to JSON or HTML for CI/CD integration or sharing:
 
 ```bash
+# JSON export (any command)
 docker-lens lint Dockerfile --json lint-report.json
 docker-lens scan nginx:latest --json security-report.json
 docker-lens optimize python:3.11 --json efficiency-report.json
+
+# HTML reports (beautiful styled reports)
+docker-lens lint Dockerfile --html lint-report.html
+docker-lens scan nginx:latest --html security-report.html
+docker-lens optimize python:3.11 --html efficiency-report.html
 ```
+
+## 🔬 Full Scan — The Ultimate Analysis
+
+Run all analyses in one comprehensive scan:
+
+```bash
+# Full scan on an image
+docker-lens fullscan nginx:latest
+
+# Also lint a Dockerfile alongside the image
+docker-lens fullscan nginx:latest --dockerfile Dockerfile
+
+# Export as HTML dashboard
+docker-lens fullscan nginx:latest --dockerfile Dockerfile --html fullreport.html
+```
+
+The fullscan combines:
+- Image layer analysis with scoring
+- Security vulnerability scan
+- Efficiency optimization suggestions
+- Optional Dockerfile linting
 
 ## 🎬 Demo Mode
 
@@ -163,6 +194,20 @@ docker-lens demo
 ```
 
 This runs through all 4 analysis types with realistic sample data, showing the beautiful terminal output.
+
+## 📋 CLI Reference
+
+| Command | Description | Options |
+|---------|-------------|---------|
+| `lint <dockerfile>` | Lint a Dockerfile | `--json`, `--html` |
+| `analyze <image>` | Analyze image layers & metadata | `--json`, `--html` |
+| `scan <image>` | Security vulnerability scan | `--json`, `--html` |
+| `optimize <image>` | Size optimization suggestions | `--json`, `--html` |
+| `fullscan <image>` | All analyses combined | `--dockerfile`, `--json`, `--html` |
+| `compare <img1> <img2>` | Compare two images | `--json` |
+| `history <image>` | View build layer history | — |
+| `rules` | List all 35 lint rules | — |
+| `demo` | Run demo with sample data | `--html` |
 
 ## 🛠️ Development
 
@@ -181,7 +226,7 @@ ruff check .
 
 ## 📦 Tech Stack
 
-- **Python 3.9+** — Core runtime
+- **Python 3.10+** — Core runtime
 - **Click** — CLI framework
 - **Rich** — Beautiful terminal rendering
 - **Docker SDK** — Docker API integration
